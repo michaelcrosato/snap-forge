@@ -9,10 +9,10 @@ def strip_comments(sql):
     i = 0
     n = len(sql)
     stack = []
-    
+
     while i < n:
         state = stack[-1] if stack else None
-        
+
         if state is None:
             if sql[i:i+2] == '/*':
                 i += 2
@@ -50,7 +50,7 @@ def strip_comments(sql):
             else:
                 out.append(sql[i])
                 i += 1
-                
+
         elif state[0] == "NORMAL_SINGLE_QUOTE":
             if sql[i:i+2] == "''":
                 out.append("''")
@@ -62,7 +62,7 @@ def strip_comments(sql):
             else:
                 out.append(sql[i])
                 i += 1
-                
+
         elif state[0] == "NORMAL_DOLLAR":
             tag = state[1]
             tag_len = len(tag)
@@ -73,7 +73,7 @@ def strip_comments(sql):
             else:
                 out.append(sql[i])
                 i += 1
-                
+
         elif state[0] == "AS_SINGLE_QUOTE":
             if sql[i:i+2] == "''":
                 stack.append(("NESTED_SINGLE_QUOTE", "''"))
@@ -107,7 +107,7 @@ def strip_comments(sql):
             else:
                 out.append(sql[i])
                 i += 1
-                
+
         elif state[0] == "NESTED_SINGLE_QUOTE":
             tag = state[1]
             if tag == "''":
@@ -132,7 +132,7 @@ def strip_comments(sql):
                 else:
                     out.append(sql[i])
                     i += 1
-                    
+
         elif state[0] == "NESTED_DOLLAR":
             tag = state[1]
             tag_len = len(tag)
@@ -143,7 +143,7 @@ def strip_comments(sql):
             else:
                 out.append(sql[i])
                 i += 1
-                
+
         elif state[0] == "AS_DOLLAR":
             tag = state[1]
             tag_len = len(tag)
@@ -190,7 +190,7 @@ def strip_comments(sql):
             else:
                 out.append(sql[i])
                 i += 1
-                
+
     return "".join(out)
 
 
@@ -200,7 +200,7 @@ def strip_string_literals(sql):
     n = len(sql)
     in_single_quote = False
     dollar_tag = None
-    
+
     while i < n:
         if dollar_tag is not None:
             tag_len = len(dollar_tag)
@@ -251,10 +251,10 @@ def split_migration_functions(sql):
     n = len(sql)
     stack = []
     current_block_start = None
-    
+
     while i < n:
         state = stack[-1] if stack else None
-        
+
         if state is None:
             if sql[i] == '$':
                 m = re.match(r'^\$[a-zA-Z_0-9]*\$', sql[i:])
@@ -275,22 +275,22 @@ def split_migration_functions(sql):
                     stack.append(("NORMAL_SINGLE_QUOTE", "'"))
                 i += 1
                 continue
-            
+
             m_create = re.match(r'^CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+', sql[i:], re.IGNORECASE)
             if m_create and current_block_start is None:
                 i += len(m_create.group(0))
                 current_block_start = i
                 continue
-                
+
             if sql[i] == ';':
                 if current_block_start is not None:
                     blocks.append(sql[current_block_start:i+1])
                     current_block_start = None
                 i += 1
                 continue
-                
+
             i += 1
-            
+
         elif state[0] == "NORMAL_SINGLE_QUOTE":
             if sql[i:i+2] == "''":
                 i += 2
@@ -299,7 +299,7 @@ def split_migration_functions(sql):
                 i += 1
             else:
                 i += 1
-                
+
         elif state[0] == "NORMAL_DOLLAR":
             tag = state[1]
             tag_len = len(tag)
@@ -308,7 +308,7 @@ def split_migration_functions(sql):
                 i += tag_len
             else:
                 i += 1
-                
+
         elif state[0] == "AS_SINGLE_QUOTE":
             if sql[i:i+2] == "''":
                 stack.append(("NESTED_SINGLE_QUOTE", "''"))
@@ -326,7 +326,7 @@ def split_migration_functions(sql):
                     i += 1
             else:
                 i += 1
-                
+
         elif state[0] == "NESTED_SINGLE_QUOTE":
             tag = state[1]
             if tag == "''":
@@ -345,7 +345,7 @@ def split_migration_functions(sql):
                     i += 1
                 else:
                     i += 1
-                    
+
         elif state[0] == "NESTED_DOLLAR":
             tag = state[1]
             tag_len = len(tag)
@@ -354,7 +354,7 @@ def split_migration_functions(sql):
                 i += tag_len
             else:
                 i += 1
-                
+
         elif state[0] == "AS_DOLLAR":
             tag = state[1]
             tag_len = len(tag)
@@ -396,7 +396,7 @@ def run_check_3(files_dict):
     for filepath, content in files_dict.items():
         content_no_comments = strip_comments(content)
         parts = split_migration_functions(content_no_comments)
-        
+
         for func_block in parts:
             name_match = re.match(r"^(?:\"?([\w]+)\"?\.)?\"?([\w]+)\"?", func_block)
             if not name_match:
@@ -404,7 +404,7 @@ def run_check_3(files_dict):
             schema_name = name_match.group(1)
             func_name = name_match.group(2)
             full_name = f"{schema_name}.{func_name}" if schema_name else func_name
-            
+
             if re.search(r"\bSECURITY\s+DEFINER\b", func_block, re.IGNORECASE):
                 body_match = re.search(r"AS\s*(?:(\$[a-zA-Z_0-9]*\$)(.*)\1|'(.*)')", func_block, re.DOTALL | re.IGNORECASE)
                 body = body_match.group(2) if body_match and body_match.group(1) is not None else (body_match.group(3) if body_match else "")
@@ -414,19 +414,19 @@ def run_check_3(files_dict):
                 options_block = func_block
                 if body_match:
                     options_block = func_block.replace(body_match.group(0), " ")
-                
+
                 has_search_path = re.search(
-                    r"SET\s+search_path\s*(?:=|\bTO\b)\s*[^;]*\bpg_temp\b", 
-                    options_block, 
+                    r"SET\s+search_path\s*(?:=|\bTO\b)\s*[^;]*\bpg_temp\b",
+                    options_block,
                     re.IGNORECASE
                 )
                 if not has_search_path:
                     errors.append(f"Function '{full_name}' in {filepath} lacks search_path with pg_temp")
-                    
+
                 # 8. Check for tenant verification check ONLY in body_no_strings (stripped of string literals)
                 has_tenant_check = re.search(
-                    r"(auth\.uid|auth\.jwt|tenant_id|current_setting)", 
-                    body_no_strings, 
+                    r"(auth\.uid|auth\.jwt|tenant_id|current_setting)",
+                    body_no_strings,
                     re.IGNORECASE
                 )
                 if not has_tenant_check:
@@ -447,7 +447,7 @@ def run_check_3(files_dict):
                         if paren_count > 0:
                             args_str += c
                         j += 1
-                    
+
                     args = []
                     curr_arg = []
                     p_count = 0
@@ -464,7 +464,7 @@ def run_check_3(files_dict):
                         else:
                             curr_arg.append(c)
                     args.append("".join(curr_arg).strip())
-                    
+
                     if len(args) < 3 or args[2].lower() not in ('true', "'true'"):
                         errors.append(f"Function '{full_name}' calls set_config without local=true: 'set_config({args_str})'")
 
@@ -482,7 +482,7 @@ def run_check_4(files_dict):
     errors = []
     all_created_tables = []
     all_cleaned_content = []
-    
+
     for filepath, content in files_dict.items():
         content_no_comments = strip_comments(content)
         content_no_strings = strip_string_literals(content_no_comments)
@@ -504,7 +504,7 @@ def run_check_4(files_dict):
 
     for schema, table, is_quoted, filepath in all_created_tables:
         norm_create_schema = (schema or 'public').lower()
-        
+
         # Match ALTER TABLE ENABLE ROW LEVEL SECURITY with optional ONLY
         alter_matches = re.finditer(
             r"ALTER\s+TABLE\s+(?:ONLY\s+)?(?:(\"?)([\w-]+)\1\.)?(\"?)([\w-]+)\3\s+(?:ENABLE|FORCE)\s+ROW\s+LEVEL\s+SECURITY",
@@ -516,7 +516,7 @@ def run_check_4(files_dict):
             alter_schema = match.group(2)
             alter_table = match.group(4)
             norm_alter_schema = (alter_schema or 'public').lower()
-            
+
             if norm_alter_schema == norm_create_schema:
                 if is_quoted:
                     if alter_table == table:
@@ -526,7 +526,7 @@ def run_check_4(files_dict):
                     if alter_table.lower() == table.lower():
                         has_rls = True
                         break
-                        
+
         if not has_rls:
             full_table_name = f"{schema}.{table}" if schema else table
             errors.append(f"Table '{full_table_name}' created in {filepath} does not have RLS enabled")
@@ -542,7 +542,7 @@ def run_check_5(files_dict):
     for filepath, content in files_dict.items():
         content_no_comments = strip_comments(content)
         parts = split_migration_functions(content_no_comments)
-        
+
         for func_block in parts:
             name_match = re.match(r"^(?:\"?([\w]+)\"?\.)?\"?([\w]+)\"?", func_block)
             if not name_match:
@@ -583,25 +583,25 @@ def run_check_5(files_dict):
 
 def test_comment_stripper_bypasses():
     print("--- Running Comment Stripper Tests ---")
-    
+
     # Test 1: PostgreSQL comments inside string literal (not AS block)
     # The linter should NOT strip comments inside normal single-quoted strings.
     sql_1 = "SELECT 'hello -- world' AS value;"
     stripped_1 = strip_comments(sql_1)
     print(f"Test 1: {sql_1!r} -> {stripped_1!r}")
-    
+
     # Test 2: PostgreSQL comments inside a single-quoted AS body
     # Here preceding ends with 'as', so dollar_tag becomes "'".
     # Inside this block, '--' is encountered. It should get stripped.
     sql_2 = "CREATE FUNCTION f() RETURNS void AS 'SELECT 1; -- comment\nSELECT 2;' LANGUAGE sql;"
     stripped_2 = strip_comments(sql_2)
     print(f"Test 2: {sql_2!r} -> {stripped_2!r}")
-    
+
     # Test 3: SQL comments in string literal inside dollar quotes
     sql_3 = "CREATE FUNCTION f() RETURNS void AS $$\nSELECT '/* not comment */';\n$$ LANGUAGE sql;"
     stripped_3 = strip_comments(sql_3)
     print(f"Test 3: {sql_3!r} -> {stripped_3!r}")
-    
+
     # Test 4: Nested dollar quotes of same tag bypass
     # An inner $$ terminates the outer $$ parser in strip_comments?
     # Wait, in strip_comments, if dollar_tag is $$ and it sees $$, it terminates.
@@ -623,7 +623,7 @@ def test_comment_stripper_bypasses():
 
 def test_check_3_definer_bypasses():
     print("\n--- Running Check 3 (SECURITY DEFINER) Tests ---")
-    
+
     # Bypass 3.1: Nested same-tag dollar quotes
     # The parser matches up to the first closing $$ inside the body, missing SECURITY DEFINER at the end.
     sql_b1 = """
@@ -637,7 +637,7 @@ def test_check_3_definer_bypasses():
     """
     errors_b1 = run_check_3({"test.sql": sql_b1})
     print(f"Bypass 3.1 (Nested same-tag dollar quotes): Detected errors? {errors_b1} (Expected empty list if bypassed)")
-    
+
     # Bypass 3.2: SQL-standard body (PostgreSQL 14+) without AS
     sql_b2 = """
     CREATE FUNCTION public.bypass_no_as() RETURNS int
@@ -664,7 +664,7 @@ def test_check_3_definer_bypasses():
 
 def test_check_4_rls_bypasses():
     print("\n--- Running Check 4 (RLS) Tests ---")
-    
+
     # Bypass 4.1: Enable RLS with ONLY keyword
     # E.g. ALTER TABLE ONLY my_table ENABLE ROW LEVEL SECURITY;
     # This is valid syntax but fails Check 4 (false positive).
@@ -689,7 +689,7 @@ def test_check_4_rls_bypasses():
 
 def test_check_5_audit_logging_bypasses():
     print("\n--- Running Check 5 (Audit Logging) Tests ---")
-    
+
     # Bypass 5.1: Nested same-tag dollar quotes masking mutations
     # A mutation is placed inside a function but after the first $$; the linter doesn't see it.
     sql_b1 = """

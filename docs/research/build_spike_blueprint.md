@@ -240,7 +240,7 @@ BEGIN
             FROM gateway.idempotency_keys
             WHERE tenant_id = v_tenant_id AND key = p_idempotency_key
             FOR UPDATE;
-            
+
             IF NOT FOUND THEN
                 INSERT INTO gateway.idempotency_keys (key, tenant_id, actor_id, action_name, status, expires_at)
                 VALUES (p_idempotency_key, v_tenant_id, v_actor_id, 'inventory.adjust_quantity', 'PENDING', now() + INTERVAL '24 hours');
@@ -289,9 +289,9 @@ BEGIN
         RETURNING id INTO v_approval_id;
 
         v_result := ROW(
-            'PENDING_APPROVAL', 
-            v_approval_id, 
-            'Adjustment exceeds threshold of ' || v_approval_threshold || ' and requires manager approval.', 
+            'PENDING_APPROVAL',
+            v_approval_id,
+            'Adjustment exceeds threshold of ' || v_approval_threshold || ' and requires manager approval.',
             NULL
         )::gateway.action_result;
 
@@ -304,7 +304,7 @@ BEGIN
 
     -- 6. Apply Adjustment Mutation
     v_new_qty := v_current_qty + p_quantity_delta;
-    
+
     IF v_new_qty < 0 THEN
         RAISE EXCEPTION 'Adjustment would result in negative quantity (% -> %)', v_current_qty, v_new_qty USING ERRCODE = '23514';
     END IF;
@@ -321,7 +321,7 @@ BEGIN
     -- Write Audit Log
     v_old_state := jsonb_build_object('quantity', v_current_qty);
     v_new_state := jsonb_build_object('quantity', v_new_qty);
-    
+
     INSERT INTO audit.audit_logs (tenant_id, actor_id, action_name, table_name, record_id, old_state, new_state)
     VALUES (v_tenant_id, v_actor_id, 'inventory.adjust_quantity', 'inventory.inventory_items', p_item_id, v_old_state, v_new_state);
 
@@ -352,14 +352,14 @@ BEGIN
 EXCEPTION
     WHEN OTHERS THEN
         GET STACKED DIAGNOSTICS v_err_msg = MESSAGE_TEXT;
-        
+
         -- Re-establish GUC tenant context
         IF v_tenant_id IS NOT NULL THEN
             PERFORM set_config('gateway.current_tenant_id', v_tenant_id::text, true);
         END IF;
 
         v_result := ROW('FAILED', NULL, 'Action failed: ' || v_err_msg, NULL)::gateway.action_result;
-        
+
         -- Guard failed key logging
         IF SQLSTATE <> '42000' AND v_tenant_id IS NOT NULL AND v_actor_id IS NOT NULL AND p_idempotency_key IS NOT NULL THEN
             INSERT INTO gateway.idempotency_keys (key, tenant_id, actor_id, action_name, status, response_body, expires_at)
@@ -368,7 +368,7 @@ EXCEPTION
             SET status = 'FAILED', response_body = to_jsonb(v_result)
             WHERE gateway.idempotency_keys.status NOT IN ('SUCCESS', 'PENDING_APPROVAL');
         END IF;
-        
+
         RETURN v_result;
 END;
 $$;
@@ -589,7 +589,7 @@ BEGIN;
 SELECT plan(8);
 
 -- 1. Establish Fixture Data
-INSERT INTO public.tenants (id, name) VALUES 
+INSERT INTO public.tenants (id, name) VALUES
 ('00000000-0000-0000-0000-00000000000a', 'Tenant A'),
 ('00000000-0000-0000-0000-00000000000b', 'Tenant B');
 
@@ -710,9 +710,9 @@ describe('Inventory Gateway Integration Tests', () => {
     const { error } = await clientA
       .from('inventory_items')
       .insert({ tenant_id: '00000000-0000-0000-0000-00000000000a', sku: uniqueSku, name: 'Item', quantity: 10 });
-    
+
     // Expect PostgREST to return a 401/403 or permission denied error code (42501)
-    expect(error?.code).toBe('42501'); 
+    expect(error?.code).toBe('42501');
   });
 
   it('isolates inventory reads between tenants', async () => {
@@ -747,7 +747,7 @@ describe('Inventory Gateway Integration Tests', () => {
     // Execute first call
     const res1 = await clientA.rpc('adjust_quantity', payload);
     expect(res1.data.status).toBe('SUCCESS');
-    expect(res1.data.new_quantity).toBe(expectedQty); 
+    expect(res1.data.new_quantity).toBe(expectedQty);
 
     // Execute duplicate call
     const res2 = await clientA.rpc('adjust_quantity', payload);

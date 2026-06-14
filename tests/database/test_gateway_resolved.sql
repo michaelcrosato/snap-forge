@@ -225,7 +225,7 @@ BEGIN
             FROM gateway.idempotency_keys
             WHERE tenant_id = v_tenant_id AND key = p_idempotency_key
             FOR UPDATE;
-            
+
             IF NOT FOUND THEN
                 INSERT INTO gateway.idempotency_keys (key, tenant_id, actor_id, action_name, status, expires_at)
                 VALUES (p_idempotency_key, v_tenant_id, v_actor_id, 'inventory.adjust_quantity', 'PENDING', now() + INTERVAL '24 hours');
@@ -270,9 +270,9 @@ BEGIN
         RETURNING id INTO v_approval_id;
 
         v_result := ROW(
-            'PENDING_APPROVAL', 
-            v_approval_id, 
-            'Adjustment exceeds threshold of ' || v_approval_threshold || ' and requires manager approval.', 
+            'PENDING_APPROVAL',
+            v_approval_id,
+            'Adjustment exceeds threshold of ' || v_approval_threshold || ' and requires manager approval.',
             NULL
         )::gateway.action_result;
 
@@ -285,7 +285,7 @@ BEGIN
 
     -- 6. Apply Adjustment Mutation
     v_new_qty := v_current_qty + p_quantity_delta;
-    
+
     IF v_new_qty < 0 THEN
         RAISE EXCEPTION 'Adjustment would result in negative quantity (% -> %)', v_current_qty, v_new_qty USING ERRCODE = '23514';
     END IF;
@@ -302,7 +302,7 @@ BEGIN
     -- Write Audit Log
     v_old_state := jsonb_build_object('quantity', v_current_qty);
     v_new_state := jsonb_build_object('quantity', v_new_qty);
-    
+
     INSERT INTO audit.audit_logs (tenant_id, actor_id, action_name, table_name, record_id, old_state, new_state)
     VALUES (v_tenant_id, v_actor_id, 'inventory.adjust_quantity', 'inventory.inventory_items', p_item_id, v_old_state, v_new_state);
 
@@ -333,7 +333,7 @@ BEGIN
 EXCEPTION
     WHEN OTHERS THEN
         GET STACKED DIAGNOSTICS v_err_msg = MESSAGE_TEXT;
-        
+
         -- Re-establish GUC tenant context
         IF v_tenant_id IS NOT NULL THEN
             PERFORM set_config('gateway.current_tenant_id', v_tenant_id::text, true);
@@ -349,7 +349,7 @@ EXCEPTION
             SET status = 'FAILED', response_body = to_jsonb(v_result)
             WHERE gateway.idempotency_keys.status NOT IN ('SUCCESS', 'PENDING_APPROVAL');
         END IF;
-        
+
         RETURN v_result;
 END;
 $$;

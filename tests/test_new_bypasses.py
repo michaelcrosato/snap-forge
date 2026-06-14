@@ -12,7 +12,7 @@ from tests.test_linters_adversarial import (
 
 def test_keyword_comment_bypass():
     print("--- Testing Keyword Comment Bypass (e.g., CREATE/*comment*/FUNCTION) ---")
-    
+
     # Bypass A: CREATE/*comment*/FUNCTION
     # If the creator uses a comment between CREATE and FUNCTION, PostgreSQL compiles it fine,
     # but the linter uses a regex split on r"\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+"
@@ -54,7 +54,7 @@ def test_keyword_comment_bypass():
 
 def test_nested_definition_bypass():
     print("\n--- Testing Nested Definition / Split Bypass ---")
-    
+
     # Bypass C: CREATE FUNCTION inside another function body
     # The linter splits on CREATE FUNCTION.
     # If a valid SECURITY DEFINER function contains the string literal 'CREATE FUNCTION',
@@ -79,7 +79,7 @@ def test_nested_definition_bypass():
 
 def test_rls_comment_bypass():
     print("\n--- Testing RLS Comment Bypass ---")
-    
+
     # Bypass D: CREATE/*comment*/TABLE
     # If the linter doesn't detect the table creation because of a comment,
     # it won't check for RLS on it.
@@ -92,7 +92,7 @@ def test_rls_comment_bypass():
 
 def test_audit_comment_bypass():
     print("\n--- Testing Audit Logging Comment Bypass ---")
-    
+
     # Bypass E: INSERT/*comment*/INTO
     # If a mutation uses comments between keywords, the comment stripper merges them,
     # and the linter's mutation regex (which expects whitespace) fails to match it.
@@ -118,7 +118,7 @@ def test_audit_comment_bypass():
 
 def test_search_path_body_bypass():
     print("\n--- Testing Search Path Body Bypass ---")
-    
+
     # Bypass F: SET search_path inside function body rather than definition options
     # The linter regex searches the entire func_block, so it matches the string inside the body
     # even though it's insecure and doesn't protect the function entry.
@@ -143,7 +143,7 @@ def test_search_path_body_bypass():
 
 def test_tenant_check_string_bypass():
     print("\n--- Testing Tenant Check String Bypass ---")
-    
+
     # Bypass G: Tenant check keyword inside a string literal
     # The linter regex searches the entire func_block (with strings) for tenant check keywords,
     # so a dummy string literal containing "tenant_id" satisfies the check.
@@ -165,7 +165,7 @@ def test_tenant_check_string_bypass():
 
 def test_table_hyphen_bypass():
     print("\n--- Testing Table Hyphen Bypass ---")
-    
+
     # Bypass H: Double-quoted table name with a hyphen
     # The linter regex uses [\w]+ which doesn't match hyphens (valid in double-quoted SQL identifiers),
     # causing the table to be ignored during RLS verification.
@@ -178,7 +178,7 @@ def test_table_hyphen_bypass():
 
 def test_table_prefix_hyphen_bypass():
     print("\n--- Testing Table Prefix Hyphen Bypass ---")
-    
+
     # Bypass I: Double-quoted table name with a hyphen sharing a prefix with an RLS-enabled table.
     # The linter matches the prefix "orders" for both tables. Because public.orders has RLS enabled,
     # the linter is fooled into thinking public."orders-archive" also has RLS enabled, resulting in no errors.
@@ -193,7 +193,7 @@ def test_table_prefix_hyphen_bypass():
 
 def test_dynamic_mutation_bypass():
     print("\n--- Testing Dynamic Mutation Bypass ---")
-    
+
     # Bypass J: String concatenation inside dynamic EXECUTE
     # The linter regex looks for literal mutation keywords (e.g. INSERT INTO),
     # but constructing it dynamically via string concatenation completely hides it.
@@ -227,9 +227,3 @@ if __name__ == "__main__":
     test_table_hyphen_bypass()
     test_table_prefix_hyphen_bypass()
     test_dynamic_mutation_bypass()
-
-
-
-
-
-

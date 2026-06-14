@@ -3,7 +3,7 @@
 -- =========================================================================
 
 -- Seed data
-INSERT INTO public.tenants (id, name) VALUES 
+INSERT INTO public.tenants (id, name) VALUES
 ('00000000-0000-0000-0000-00000000000a', 'Tenant A'),
 ('00000000-0000-0000-0000-00000000000b', 'Tenant B');
 
@@ -25,9 +25,9 @@ SET request.jwt.claim.sub = '';
 
 -- Call adjust_quantity - should return FAILED status gracefully without crashing
 SELECT * FROM inventory.adjust_quantity(
-    '10000000-0000-0000-0000-000000000000', 
-    5, 
-    'Restock', 
+    '10000000-0000-0000-0000-000000000000',
+    5,
+    'Restock',
     'key-unauth'
 );
 
@@ -35,9 +35,9 @@ SELECT * FROM inventory.adjust_quantity(
 SET request.jwt.claim.sub = '44444444-4444-4444-4444-444444444444'; -- No tenant map
 
 SELECT * FROM inventory.adjust_quantity(
-    '10000000-0000-0000-0000-000000000000', 
-    5, 
-    'Restock', 
+    '10000000-0000-0000-0000-000000000000',
+    5,
+    'Restock',
     'key-no-tenant'
 );
 
@@ -52,9 +52,9 @@ SET request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 -- First call: attempts to adjust quantity, but results in negative quantity (-15 delta on 10 quantity)
 -- Should return FAILED and write it.
 SELECT * FROM inventory.adjust_quantity(
-    '10000000-0000-0000-0000-000000000000', 
-    -15, 
-    'Reduce too much', 
+    '10000000-0000-0000-0000-000000000000',
+    -15,
+    'Reduce too much',
     'key-overwrite-test'
 );
 
@@ -64,9 +64,9 @@ SELECT key, status, response_body FROM gateway.idempotency_keys WHERE key = 'key
 -- Second call: using the same key. In the resolved code, this goes to the unique_violation handler,
 -- reads the status 'FAILED' and should return the cached failure response directly.
 SELECT * FROM inventory.adjust_quantity(
-    '10000000-0000-0000-0000-000000000000', 
-    -15, 
-    'Reduce too much', 
+    '10000000-0000-0000-0000-000000000000',
+    -15,
+    'Reduce too much',
     'key-overwrite-test'
 );
 

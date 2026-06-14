@@ -3,7 +3,7 @@
 -- =========================================================================
 
 -- Seed data
-INSERT INTO public.tenants (id, name) VALUES 
+INSERT INTO public.tenants (id, name) VALUES
 ('00000000-0000-0000-0000-00000000000a', 'Tenant A'),
 ('00000000-0000-0000-0000-00000000000b', 'Tenant B');
 
@@ -23,17 +23,17 @@ INSERT INTO inventory.inventory_items (id, tenant_id, sku, name, quantity) VALUE
 -- Set sub claim to NULL (unauthenticated)
 SET request.jwt.claim.sub = '';
 
--- Let's try calling adjust_quantity. 
--- We expect 'Unauthenticated request' to be raised. 
+-- Let's try calling adjust_quantity.
+-- We expect 'Unauthenticated request' to be raised.
 -- But wait, because auth.uid() is null, the EXCEPTION handler will try to insert:
 -- VALUES (p_idempotency_key, v_tenant_id, v_actor_id, ...) where v_tenant_id and v_actor_id are null.
 -- Since actor_id and tenant_id are NOT NULL in gateway.idempotency_keys, this INSERT will fail.
 -- PostgreSQL will throw a NOT NULL constraint violation error INSTEAD of returning a clean 'FAILED' action result!
 
 SELECT * FROM inventory.adjust_quantity(
-    '10000000-0000-0000-0000-000000000000', 
-    5, 
-    'Restock', 
+    '10000000-0000-0000-0000-000000000000',
+    5,
+    'Restock',
     'key-unauth'
 );
 
@@ -42,9 +42,9 @@ SELECT * FROM inventory.adjust_quantity(
 SET request.jwt.claim.sub = '44444444-4444-4444-4444-444444444444'; -- No tenant map
 
 SELECT * FROM inventory.adjust_quantity(
-    '10000000-0000-0000-0000-000000000000', 
-    5, 
-    'Restock', 
+    '10000000-0000-0000-0000-000000000000',
+    5,
+    'Restock',
     'key-no-tenant'
 );
 
@@ -59,9 +59,9 @@ SET request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 -- First call: attempts to adjust quantity, but results in negative quantity (-15 delta on 10 quantity)
 -- This will fail and write a FAILED status with the actual error message.
 SELECT * FROM inventory.adjust_quantity(
-    '10000000-0000-0000-0000-000000000000', 
-    -15, 
-    'Reduce too much', 
+    '10000000-0000-0000-0000-000000000000',
+    -15,
+    'Reduce too much',
     'key-overwrite-test'
 );
 
