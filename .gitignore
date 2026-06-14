@@ -1,0 +1,23 @@
+# Third-party artifacts (not ours to redistribute publicly)
+coderabbit.html
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.vscode/
+.idea/
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Future build output
+node_modules/
+dist/
+build/
+.next/
+.turbo/
