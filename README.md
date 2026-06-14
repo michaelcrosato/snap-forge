@@ -16,7 +16,7 @@ So snap-forge is a bet on **many small, single-purpose blocks** — inventory lo
 
 1. **Build small blocks, not a monolith — and it's evidence-backed.** The strongest coding models still fail a large share of realistic medium/large engineering tasks on neutral benchmarks, yet are reliable on small, well-scoped units. Small + specified beats large + ambiguous.
 2. **"The context window as the integration layer" is the risky half — hedge it.** Long context degrades well before its advertised size; durable state belongs in the database and event log, not the prompt. The model is excellent human-in-the-loop glue, not an unattended backbone.
-3. **Build vs. adopt: adopt the substrate, build the thin glue.** The "catch-all infrastructure" already exists as actively-maintained open source — a backend (Supabase) + a workflow engine (n8n) + connectors (Twilio/Stripe/MCP). snap-forge's value is the assembly, the per-business context, the vertical blocks, and the spine.
+3. **Build vs. adopt: adopt the substrate, build the thin glue.** The "catch-all infrastructure" already exists as actively-maintained open source — a backend (Supabase) + a deployment-fit orchestrator (n8n for internal/client-owned deployments; Trigger.dev/Node-RED/custom worker for SaaS) + connectors (Twilio/Stripe/MCP). snap-forge's value is the assembly, the per-business context, the vertical blocks, and the spine.
 4. **The spine: a typed action gateway with a hard approval gate.** Every block performs *one typed action*; nothing writes or calls out except through the gateway, which checks permission, validates inputs, enforces idempotency, writes an audit record, and requires human approval for money / PHI / compliance / destructive / AI-authored writes. (The MCP spec independently recommends this posture.)
 
 Full reasoning, citations, and confidence levels are in [the research report](docs/snap-forge-research-report.md).
@@ -45,7 +45,7 @@ Full reasoning, citations, and confidence levels are in [the research report](do
         │ only the gateway writes / calls out
         ▼
 ┌─ Shared core (ADOPT) ──────────────┐   ┌─ Deterministic orchestrator ─┐
-│  Supabase: Postgres · Auth/RLS ·   │   │  n8n / Activepieces:          │
+│  Supabase: Postgres · Auth/RLS ·   │   │  n8n / Trigger.dev / worker:  │
 │  Edge Functions · Realtime ·       │◄─►│  the wiring between blocks    │
 │  Storage · events/outbox table     │   │  & external systems           │
 └────────────────────────────────────┘   └───────────────────────────────┘
@@ -65,7 +65,7 @@ Principle: **deterministic skeleton, AI-authored muscles, human-in-the-loop nerv
 | Layer | Pick | Role |
 |---|---|---|
 | Shared core | **Supabase** | Postgres + auth/RLS + edge functions + realtime + storage + events |
-| Orchestration | **n8n** (or Activepieces) | deterministic wiring between blocks |
+| Orchestration | **n8n** for client-owned/internal deployments; **Trigger.dev / Node-RED / custom outbox worker** for SaaS | deterministic wiring between blocks, chosen by license/deployment model |
 | **Action gateway** | **build this** | typed actions · permission · audit · approval gate — *the spine* |
 | Blocks | Supabase Edge Functions / small services | one typed action each; AI-written; tested |
 | Comms / pay | Twilio · Resend · Stripe | SMS/voice · email · payments (also minimizes PCI scope) |
@@ -77,6 +77,9 @@ Principle: **deterministic skeleton, AI-authored muscles, human-in-the-loop nerv
 - **[docs/snap-forge-research-report.md](docs/snap-forge-research-report.md)** — the main report: AI-capability landscape, market scan, build-vs-adopt blueprint, the gateway spine, failure modes, and the concrete starting stack.
 - **[docs/peer-proposal-critique.md](docs/peer-proposal-critique.md)** — adversarial review of three alternative architecture proposals, with a CONFIRMED / REFUTED / OVERSTATED table against primary sources.
 - **[docs/reverification-2026-06-14.md](docs/reverification-2026-06-14.md)** — the final consolidated verification table with live repo data.
+- **[docs/adr-d1-first-vertical.md](docs/adr-d1-first-vertical.md)** through **[docs/adr-d5-multi-tenancy.md](docs/adr-d5-multi-tenancy.md)** — decision memos for the first vertical, SoR/projection boundary, workflow-engine licensing, action gateway, and tenant isolation.
+- **[docs/research-ledger.md](docs/research-ledger.md)** — claim ledger mapping evidence, classifications, and owning ADRs.
+- **[docs/open-questions.md](docs/open-questions.md)** — partner, commercial, and build-spike blockers that still need proof.
 - **[docs/STATUS.md](docs/STATUS.md)** — current status and the proposed next step.
 
 ## How this was researched

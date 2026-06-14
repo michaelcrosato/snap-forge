@@ -59,4 +59,4 @@ The deep-research harness fans out ~110 agents and runs ~16 verifier votes concu
 - **Escalate the approval gate from the MCP spec's SHOULD to a hard MUST** for money movement, PHI access, compliance writes (Metrc), AI-authored message bodies, and destructive writes. (Answers the open question from the run.)
 - Keep it a **modular monolith with an outbox/events table inside one Postgres** first (thesis F) — not a distributed event bus on day one.
 
-_Implementation of the fold (editing `snap-forge-research-report.md` + the diagram) is left for your approval — say the word and I'll do it._
+_Update after ADR pass (2026-06-14): the fold is implemented in `snap-forge-research-report.md`, `README.md`, and ADR-D1 through ADR-D5. The workflow-engine recommendation now carries the deployment/license caveat captured in `adr-d3-workflow-engine.md`._
