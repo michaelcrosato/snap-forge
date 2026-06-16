@@ -39,3 +39,5 @@ Run the first build spike:
 ## Open for Review
 
 The foundation is still deliberately reviewable. The highest-risk assumptions are now isolated in [`open-questions.md`](open-questions.md), especially Tekmetric partner terms, workflow-engine licensing by deployment model, gateway ergonomics under a real write, Supavisor/session behavior, and the deferred P1 decisions D6-D10.
+
+**We do not know we are on the right path.** The honest record of what we're unsure of — including thesis-level risks (no demand validation, no design partner, a moving AI-capability target) that could invalidate the whole direction — is in [`uncertainty-register.md`](uncertainty-register.md). Nothing is built yet, which makes now the cheapest possible moment to be wrong.

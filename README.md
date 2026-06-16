@@ -4,6 +4,8 @@
 
 **Status: 🔬 research & foundation stage — no application code yet.** This repository is a thinking space. The goal right now is to get the *foundation, infrastructure, and philosophy* right before building anything. Critique and discussion are the whole point at this stage — start with [`docs/`](docs/).
 
+> ⚠️ **We have not built, shipped, or sold anything, and we do not actually know we are on the right path.** What we are unsure of — including thesis-level risks that could invalidate the whole direction — is tracked openly in [`docs/uncertainty-register.md`](docs/uncertainty-register.md). Being well-argued is not the same as being right.
+
 ---
 
 ## The idea
@@ -84,6 +86,7 @@ Principle: **deterministic skeleton, AI-authored muscles, human-in-the-loop nerv
 - **[docs/research/open_questions_resolution.md](docs/research/open_questions_resolution.md)** — long-form resolution of the build-spike open questions (orchestrator comparison, Supavisor pooler safety, CI static checks).
 - **[docs/STATUS.md](docs/STATUS.md)** — current status and the proposed next step.
 - **[docs/foundation-review-2026-06-15.md](docs/foundation-review-2026-06-15.md)** — the consolidation review: branch dispositions, what was salvaged/dropped, live-source verification of the load-bearing claims, and the required follow-up fixes.
+- **[docs/uncertainty-register.md](docs/uncertainty-register.md)** — the honest record of what we don't know, from thesis-level "are we even on the right path" risks down to settle-by-building unknowns.
 
 ## How this was researched
 
