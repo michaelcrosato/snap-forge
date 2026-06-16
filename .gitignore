@@ -21,3 +21,13 @@ dist/
 build/
 .next/
 .turbo/
+
+# Agent / orchestration scratch (process exhaust — never commit)
+.agents/
+..agents/
+trace_comment.py
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/

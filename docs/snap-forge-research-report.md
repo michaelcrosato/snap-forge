@@ -28,7 +28,7 @@ When the number matters to a decision, I say which bucket it's in.
 
 **Build-vs-adopt: adopt the substrate, build only the thin vertical glue.** The "catch-all infrastructure" you're looking for already exists as a small set of actively-maintained, public, self-hostable platforms (a backend-as-a-service + a workflow/automation engine + a connector ecosystem + Claude as co-developer). Snap-forge's value is **the assembly, the business-context layer, and the vertical-specific blocks** — not reinventing auth, queues, or 400 connectors.
 
-**One-line recommendation:** Stand up a shared core (Supabase) + a deterministic workflow engine (n8n or Activepieces) + a thin **typed-action gateway with an approval gate** that every block calls + adopted comms/payment connectors (Twilio, Stripe); let Claude write the thin single-purpose blocks on top, and use the context window as human-in-the-loop assistance — never as the trusted unattended wiring between blocks. (See §9 for the gateway spine.)
+**One-line recommendation:** Stand up a shared core (Supabase) + a deterministic workflow engine chosen by deployment model (n8n for client-owned/internal deployments; Trigger.dev, Node-RED, or a custom outbox worker for SaaS unless a commercial workflow-engine agreement is signed) + a thin **typed-action gateway with an approval gate** that every block calls + adopted comms/payment connectors (Twilio, Stripe); let Claude write the thin single-purpose blocks on top, and use the context window as human-in-the-loop assistance — never as the trusted unattended wiring between blocks. (See §9 for the gateway spine.)
 
 ---
 
@@ -96,11 +96,12 @@ A large empirical study the harness surfaced (~**304,362 AI-authored commits acr
 The brief asked: _is there a platform already doing "pretty much exactly this"?_ Answer: **no single product is "snap-forge," but the connective-tissue layer you want is a well-established, actively-maintained, mostly open-source stack you should adopt rather than rebuild.** (Platform-maintenance specifics below were re-verified 2026-06-14 with live GitHub stats — now ✅.)
 
 ### 6.1 Workflow / automation backbones (the wiring between blocks)
-- **n8n** — fair-code (Sustainable Use License), self-hostable, 400+ integrations, native AI nodes (LangChain-based). **Live (2026-06): ~192k★, release 2.25.7 Jun 10 2026.** ✅ The default "deterministic glue" recommendation.
-- **Activepieces** — open-source (MIT community edition), MCP-aware, lighter and very AI-forward. **Live: ~22.8k★, release Jun 14 2026.** ✅
+- **n8n** — fair-code (Sustainable Use License), self-hostable, 400+ integrations, native AI nodes (LangChain-based). **Live (2026-06): ~192k★, release 2.25.7 Jun 10 2026.** ✅ The best default for client-owned/internal workflow automation, but not the default free substrate for multi-tenant SaaS or embedded workflow resale without commercial terms.
+- **Activepieces** — MIT core, MCP-aware, lighter and very AI-forward; enterprise/cloud features require commercial licensing. **Live: ~22.8k★, release Jun 14 2026.** ✅
 - **Windmill** — open-source, turns scripts (TS/Python) into workflows + internal UIs; strongest if you want code-first blocks. **Live: ~16.8k★, release Jun 11 2026.** ✅
-- **Trigger.dev** — code-first background jobs/durable workflows for developers.
-> Use one of these as the **deterministic orchestrator** between blocks. This is the layer that should be _code/config_, not an LLM context window, for anything unattended.
+- **Trigger.dev** — Apache-2.0, code-first background jobs/durable workflows for developers.
+- **Node-RED** — Apache-2.0 visual flow runtime; less SaaS-productized than n8n, but permissively licensed.
+> Use one of these as the **deterministic orchestrator** between blocks. Choose based on deployment and licensing: n8n for internal/client-owned automation; Trigger.dev, Node-RED, or a custom outbox worker for SaaS unless commercial terms cover the embedded workflow use case. This is the layer that should be _code/config_, not an LLM context window, for anything unattended.
 
 ### 6.2 Backend / data / auth backbone (the shared core every block plugs into)
 - **Supabase** — Postgres + Auth (row-level security) + Edge Functions + Realtime + Storage + pgvector; open-source, self-hostable, HIPAA-capable on paid tiers. **Live (2026-06): ~104k★, release May 2026.** ✅ **This is the recommended shared core.**
@@ -147,7 +148,7 @@ Don't store raw card data. Use a tokenizing processor (Stripe/Square) so card da
 | AI is good at one small thing at a time | **Sound ✅** | scaffolding/scoping dominates; small+specified beats large+ambiguous |
 | Compose blocks like Lego | **Sound ✅** | plugins/subagents/MCP are exactly this, in production |
 | The context window can be the integration layer | **Half-true — hedge ◐** | great as human-in-loop glue & build-time; unreliable as unattended backbone (context rot, tool-count rot, −25pt interactive, MCP CVEs) |
-| "Maybe we don't need a catch-all platform" | **Partly — adopt one ✅** | the catch-all already exists (Supabase + n8n/Activepieces + connectors); don't rebuild it |
+| "Maybe we don't need a catch-all platform" | **Partly — adopt one ✅** | the catch-all already exists (Supabase + a deployment-fit orchestrator + connectors); don't rebuild it |
 | AI writes essentially all the code | **Viable with guardrails ○** | works _if_ blocks stay small, tested, reviewed, rollback-able |
 
 ---
@@ -178,7 +179,7 @@ Don't store raw card data. Use a tokenizing processor (Stripe/Square) so card da
         │ only the gateway writes / calls out
         ▼
 ┌─ Shared core (ADOPT) ──────────────┐   ┌─ Deterministic orchestrator ─┐
-│  Supabase: Postgres · Auth/RLS ·   │   │  n8n / Activepieces:          │
+│  Supabase: Postgres · Auth/RLS ·   │   │  n8n / Trigger.dev / worker:  │
 │  Edge Functions · Realtime ·       │◄─►│  the wiring between blocks    │
 │  Storage · events/outbox table     │   │  & external systems           │
 └────────────────────────────────────┘   └───────────────────────────────┘
@@ -209,7 +210,7 @@ approval: required_if quantity_delta_abs > threshold
 
 **Concrete starting stack (opinionated):**
 1. **Shared core:** Supabase (Postgres + Auth/RLS + Edge Functions + Storage + Realtime + an `events`/outbox table). One core, many blocks.
-2. **Orchestration:** n8n (or Activepieces if you want lighter/more AI-native) as the **deterministic** glue. Reserve LLM glue for human-in-the-loop steps only.
+2. **Orchestration:** choose by deployment model: n8n for client-owned/internal automation; Trigger.dev, Node-RED, or a custom Postgres outbox worker for SaaS unless commercial workflow-engine terms are signed. Reserve LLM glue for human-in-the-loop steps only.
 3. **Action gateway (the spine):** a thin typed-action layer every block calls — permission check, input validation, idempotency, audit write, approval gate. Start it as a module inside the modular monolith, not a separate service. _This is the piece you actually build and own._
 4. **Blocks:** each is a Supabase Edge Function or a small service that exposes **one typed action** — one responsibility, its own tests, deployable and rollback-able alone. Claude Code writes them; you review small diffs.
 5. **Comms/pay:** Twilio + Resend + Stripe via their SDKs. Use `twilio-labs/mcp` for agent-assisted dev, not as a production dependency.
@@ -239,7 +240,7 @@ approval: required_if quantity_delta_abs > threshold
 
 ## 11. Open questions — status after the 2026-06-14 re-verification
 _The clean re-verification ran (full table in `reverification-2026-06-14.md`)._
-1. **RESOLVED — live maintenance signals (mid-2026):** n8n ~192k★ (rel. 2.25.7, Jun 10 2026), Supabase ~104k★ (rel. May 2026), Activepieces ~22.8k★ MIT (rel. Jun 14 2026), Windmill ~16.8k★ (rel. Jun 11 2026), Appwrite ~56.3k★ (rel. Apr 2026), PocketBase ~59.1k★ but **pre-v1.0**. Pick stands: **Supabase + n8n**.
+1. **RESOLVED — live maintenance signals (mid-2026):** n8n ~192k★ (rel. 2.25.7, Jun 10 2026), Supabase ~104k★ (rel. May 2026), Activepieces ~22.8k★ MIT core / commercial enterprise features (rel. Jun 14 2026), Windmill ~16.8k★ (rel. Jun 11 2026), Appwrite ~56.3k★ (rel. Apr 2026), PocketBase ~59.1k★ but **pre-v1.0**. Pick stands: **Supabase + a deployment-fit deterministic orchestrator**.
 2. **Build-time task (not research):** per-target-state Metrc requirements/deadlines — re-confirm for the specific state when you take a cannabis client.
 3. **Direction holds; figures single-source:** AI-tech-debt rates (§5) and MCP-Universe success (§2.4) — treat as directional, not settled numbers.
 4. **Build-time task:** Tekmetric / Dutchie / OpenEMR exact endpoints — confirm when you pick the first vertical.

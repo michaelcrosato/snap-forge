@@ -23,7 +23,7 @@ What to adopt from it (this is its real contribution beyond my report):
 The one caveat: **don't *build* all seven layers from scratch.** Identity, permissions (row-level security), storage, realtime, and an events table come free with Supabase (per my report). You build the *action registry + audit + connectors + approval gates* on top. Proposal 1 slightly undersells how much of its "boring catch-all" is already an adopt, not a build.
 
 ### Proposal 2 — "Supabase + n8n + LangGraph + CrewAI + AutoGen + …" → right base, over-stacked middle.
-- The **base is correct and matches my report**: Supabase + n8n is exactly the shared-core + deterministic-orchestrator pairing I recommended.
+- The **base is directionally correct and matches the original report**: Supabase + a deterministic orchestrator is the right shape. Later ADR work adds the license/deployment caveat: n8n fits client-owned/internal automation, while multi-tenant SaaS should use a permissive runtime or signed commercial terms (see `adr-d3-workflow-engine.md`).
 - The **AI-orchestration layer is overengineered**: piling LangGraph *and* CrewAI *and* AutoGen onto a one-location small business is multi-agent complexity that the evidence says is the *least* reliable regime (errors compound across steps; tau²-bench's −25-point interactive drop from pass 1). For a cannabis shop you need n8n + a few scoped LLM calls, not three agent frameworks.
 - The **effort/cost claims are marketing**: "stood up in days, bricks in hours, $0–50/mo" is true for a toy demo and false for the regulated verticals it names in the same breath (Metrc credentialing is weeks; HIPAA needs a BAA; PCI scope). The cheap part is the infra; the expensive part is compliance + reliability + real integration.
 - The **four infographics are vendor/educational marketing** (n8n/LangChain/LangGraph/CrewAI/AutoGen tool guide, LangGraph topology diagram, "future of composable AI agents"). Near-zero evidentiary weight; the tools they depict are real but the framing is promotional.
@@ -61,7 +61,7 @@ The one caveat: **don't *build* all seven layers from scratch.** Identity, permi
 |---|---|---|
 | **A. Schemaless because "AI is smart"; a new column "crashes the system"** | **REFUTED / anti-pattern** | EnterpriseDB explicitly lists "unnecessary jsonb/dynamic columns" as a Postgres anti-pattern; zero-downtime column adds are a documented solved practice. Use jsonb for genuinely variable *edges*, behind a real schema — not as a schema replacement. |
 | **B. AI as the default on-the-fly translator for every integration** | **REFUTED as default; OK as fallback** | NIST 600-1 names confabulation intrinsic and dangerous in regulated domains; context-rot + cost + latency + nondeterminism. Use deterministic mappings for known formats; reserve LLM translation for genuinely unstructured input. |
-| **C. LangGraph + CrewAI + AutoGen multi-agent stack for a small business** | **OVERSTATED / overengineered** | Errors compound across steps; tau²-bench −25pt interactive drop (pass 1). Use one orchestrator (prefer deterministic n8n) + scoped single LLM calls. Reach for graph-agents only when a task genuinely needs loops/branching. |
+| **C. LangGraph + CrewAI + AutoGen multi-agent stack for a small business** | **OVERSTATED / overengineered** | Errors compound across steps; tau²-bench −25pt interactive drop (pass 1). Use one deterministic orchestrator selected by deployment/license fit + scoped single LLM calls. Reach for graph-agents only when a task genuinely needs loops/branching. |
 | **D. "Context window as glue / it just knows the business"** | **REFUTED** | Already verified (pass 1): NoLiMa effective-context far below advertised; Chroma context-rot. Durable state in DB; feed the model small, curated, scoped context. |
 | **E. "Stood up in days, bricks in hours, $0–50/mo"** | **OVERSTATED** | True for a demo; false for Metrc (weeks of credentialing), HIPAA (BAA), PCI. Infra is cheap; compliance + reliability + integration are where the time/money go. |
 | **F. Event-driven / loose-coupling / typed-action-registry substrate** | **SOUND but not free** | The typed-action-registry (Proposal 1) is genuinely good. But event-driven adds eventual-consistency, idempotency, and distributed-debugging costs (temporal.io, encore.dev). Start with an **outbox/events table inside one Postgres** (modular monolith), not a distributed bus. Proposal 3's "fully blind apps on a bus from day one" is premature distribution. |
@@ -75,14 +75,14 @@ The one caveat: **don't *build* all seven layers from scratch.** Identity, permi
 2. **Human-approval gates by risk** (Proposal 1) — money / PHI / compliance / AI-authored messages / destructive writes.
 3. **Events/outbox table + audit inside one Postgres** first (Proposals 1 & 3, done conservatively) — composability without premature microservices.
 4. **AI-as-translator strictly as a fallback** for unstructured input (Proposal 3's one good idea, scoped).
-5. Confirms the **Supabase + n8n base** and **MCP-as-connective-tissue** already in my report (Proposals 1 & 2).
+5. Confirms the **Supabase + deterministic-orchestrator base** and **MCP-as-connective-tissue** already in my report (Proposals 1 & 2), with the workflow-engine licensing caveat now captured in `adr-d3-workflow-engine.md`.
 
 **Reject (hype or anti-patterns):**
 1. Schemaless-because-AI / "a column add crashes the system" (Proposal 3).
 2. AI-as-universal-translator as the *default* integration mechanism (Proposal 3).
-3. LangGraph + CrewAI + AutoGen multi-agent stack for a small shop (Proposal 2) — start with deterministic n8n + scoped LLM calls.
+3. LangGraph + CrewAI + AutoGen multi-agent stack for a small shop (Proposal 2) — start with one deterministic orchestrator + scoped LLM calls.
 4. "Days/hours/$0–50" effort-and-cost framing for regulated verticals (Proposal 2).
 5. Depending on A2A (Proposal 2) — real but too early; revisit later.
 6. Treating Odoo's "vertical modules" as mature for cannabis/dealership (Proposal 2) — they're third-party OCA with uneven coverage; no native Metrc.
 
-**The through-line:** all three rediscovered the Unix philosophy ("small tools, do one thing well"), which is correct and matches your instinct. The one that adds real engineering value beyond the slogan is **Proposal 1's typed-action-registry + audit + approval discipline** — that's the piece worth importing into snap-forge. The rest is either already in the blueprint (Supabase/n8n/MCP) or is hype/anti-pattern to discard.
+**The through-line:** all three rediscovered the Unix philosophy ("small tools, do one thing well"), which is correct and matches your instinct. The one that adds real engineering value beyond the slogan is **Proposal 1's typed-action-registry + audit + approval discipline** — that's the piece worth importing into snap-forge. The rest is either already in the blueprint (Supabase + deployment-fit orchestrator + MCP) or is hype/anti-pattern to discard.
