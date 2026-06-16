@@ -56,3 +56,12 @@ Direct-query architecture is attractive because it avoids local drift, but it fa
 1. [Tekmetric Integrations](https://www.tekmetric.com/integrations)
 2. [Transactional Outbox Pattern](https://microservices.io/patterns/data/transactional-outbox.html)
 3. [Supabase Database Functions](https://supabase.com/docs/guides/database/functions)
+
+## Update (2026-06-15 consolidation): make system-of-record per-domain, not binary
+
+Salvaged from the parallel `research/opus-4-8-20260614-1049` run (closed; findings folded in). The incumbent-as-SoR + Supabase-as-projection boundary above is canonically sound — it is CQRS: write model = SoR, read model = a durable, eventually-consistent cache (`learn.microsoft.com/azure/architecture/patterns/cqrs`; ledger `OPUS-D2-01`). Two refinements:
+
+1. **System-of-record is per-domain, not global/binary.** Data snap-forge *originates* — scan events, CRM notes, tasks, the **audit log**, and **approval decisions** — has no incumbent owner, so **Supabase is the SoR for those domains**, not a cache. Treating originated data as a cache invites the dual-write problem (`confluent.io/blog/dual-write-problem`; `OPUS-D2-05`); write-backs to the incumbent go through the gateway's transactional outbox. For **greenfield** shops with no incumbent, Supabase is SoR for everything and the projection layer is empty — design for this up front (`OPUS-D2-04`).
+2. **The projection needs push + delta-poll + reconcile, not a thin cache.** Tekmetric exposes only a narrow webhook set; otherwise "your account data will sync once per hour" (`support.shopgenie.io`; `OPUS-D2-02`). Even Shopify mandates reconciliation jobs because webhook delivery is not guaranteed (`OPUS-D2-03`). Every incumbent-owned projection needs webhooks **plus** scheduled delta-poll **plus** reconciliation with idempotent upserts keyed on incumbent IDs.
+
+Keep the "don't replace the incumbent" instinct as the default — just make ownership explicit and per-domain.

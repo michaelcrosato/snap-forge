@@ -80,7 +80,10 @@ Principle: **deterministic skeleton, AI-authored muscles, human-in-the-loop nerv
 - **[docs/adr-d1-first-vertical.md](docs/adr-d1-first-vertical.md)** through **[docs/adr-d5-multi-tenancy.md](docs/adr-d5-multi-tenancy.md)** — decision memos for the first vertical, SoR/projection boundary, workflow-engine licensing, action gateway, and tenant isolation.
 - **[docs/research-ledger.md](docs/research-ledger.md)** — claim ledger mapping evidence, classifications, and owning ADRs.
 - **[docs/open-questions.md](docs/open-questions.md)** — partner, commercial, and build-spike blockers that still need proof.
+- **[docs/research/build_spike_blueprint.md](docs/research/build_spike_blueprint.md)** — the first build-spike database design: schemas, the `inventory.adjust_quantity` PL/pgSQL action gateway (`SECURITY DEFINER` under a dedicated non-superuser role), RLS lockdown, audit/outbox, and an illustrative test spec.
+- **[docs/research/open_questions_resolution.md](docs/research/open_questions_resolution.md)** — long-form resolution of the build-spike open questions (orchestrator comparison, Supavisor pooler safety, CI static checks).
 - **[docs/STATUS.md](docs/STATUS.md)** — current status and the proposed next step.
+- **[docs/foundation-review-2026-06-15.md](docs/foundation-review-2026-06-15.md)** — the consolidation review: branch dispositions, what was salvaged/dropped, live-source verification of the load-bearing claims, and the required follow-up fixes.
 
 ## How this was researched
 

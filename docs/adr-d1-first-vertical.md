@@ -48,3 +48,13 @@ Medical/dental has standardized healthcare integration surfaces such as FHIR, bu
 4. [Metrc Oklahoma Integration and API](https://www.metrc.com/oklahoma-integration-and-api/)
 5. [Supabase HIPAA Projects](https://supabase.com/docs/guides/platform/hipaa-projects)
 6. [Supabase Pricing](https://supabase.com/pricing)
+
+## Update (2026-06-15 consolidation): self-service integration primary — Shopmonkey
+
+A parallel research run (`research/opus-4-8-20260614-1049`, closed as superseded; its findings are salvaged here) verified an integration-sequencing refinement this ADR's Tekmetric-first framing missed. The **vertical** (auto repair) is unchanged; the **first integration target** changes.
+
+- **Shopmonkey is genuinely self-service.** Any shop Admin self-generates Public/Private API keys in Settings; public REST v3 docs; no NDA, partner approval, or revenue gate (`shopmonkey.dev/overview`; ledger `OPUS-D1-01`). This removes the single biggest D1 unknown — *can a solo builder even get write access* — that Tekmetric leaves open.
+- **Tekmetric is approval-gated**, not self-service: access is request-based with a ~2–3 week approval "at Tekmetric's discretion, not guaranteed" (OAuth2 client_credentials + sandbox) (`beetlebugorg/tekmetric-mcp` README; ledger `OPUS-D1-04`). Keep it as the approval-gated **secondary**.
+- **Tekion** is the most gated (dealer/OEM/certified-partner); defer to a later/enterprise milestone.
+
+**Revised recommendation:** build the first blocks against the **Shopmonkey sandbox now**; file the Tekmetric access request in parallel; defer Tekion. **Flip condition (open item):** confirm Shopmonkey's entry plan includes API access *with write scope* (the action gateway hard-requires writes) before committing — tracked in [`open-questions.md`](open-questions.md) Q1. This also resolves the internal contradiction noted by the deep-research reconciliation pass, which independently downgraded Tekmetric to a "candidate, medium-confidence" incumbent.

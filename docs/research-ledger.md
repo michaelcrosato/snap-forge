@@ -62,7 +62,7 @@ This ledger tracks decision-grade claims from the snap-forge architecture resear
 
 ## Parallel-Run Reconciliation
 
-A sibling `opus` research worktree at `research/opus-4-8-20260614-1049` produced an `open-questions.md` memo rather than a full competing ledger. Its claims were reconciled into this branch as follows:
+A sibling `opus` research run at `research/opus-4-8-20260614-1049` produced a full ADR set and a granular evidence ledger (not merely a memo). Its deferred P1 decisions were reconciled into this branch as below, and its load-bearing unique primary-evidence rows were salvaged into the [Salvaged primary-evidence rows](#salvaged-primary-evidence-rows-from-researchopus-4-8-20260614-1049) section (2026-06-15); the branch is now closed as superseded. Reconciliation of the deferred decisions:
 
 | Sibling-run item | Reconciliation |
 |---|---|
@@ -80,3 +80,53 @@ A sibling `opus` research worktree at `research/opus-4-8-20260614-1049` produced
 - **C (Adapt-old-pattern)**: Transactional outbox; stored procedure/RPC write gate; audit log and approval queue.
 - **D (Novel)**: None required for the first build spike.
 - **E (Refuted)**: AI as the unattended integration layer; direct database writes by AI-authored blocks; schemaless JSONB as a schema replacement; n8n-as-hidden-SaaS-backend without licensing review.
+
+## Salvaged primary-evidence rows (from `research/opus-4-8-20260614-1049`)
+
+Granular, per-claim evidence salvaged from the closed parallel run (2026-06-15). Stable IDs `OPUS-D{n}-{nn}`. Confidence: ✅✅ clean adversarial verification · ✅ primary-source-grounded + corroborated · ◐ single primary source. Every external fact below was independently re-verified against live sources during the 2026-06-15 foundation review (see [`foundation-review-2026-06-15.md`](foundation-review-2026-06-15.md)).
+
+### D1 — First vertical
+| ID | Claim (evidence) | Source · date | Conf | Decision impact |
+|---|---|---|---|---|
+| OPUS-D1-01 | Shopmonkey API is self-service: any Admin generates Public/Private keys; public REST v3 docs; no NDA/partner/revenue gate | shopmonkey.dev/overview · 2026 | ✅✅ | Makes auto-repair buildable solo; becomes the primary first integration |
+| OPUS-D1-04 | Tekmetric API access is request-based, ~2–3 wk approval "at Tekmetric's discretion", not guaranteed; OAuth2 client_credentials + sandbox | beetlebugorg/tekmetric-mcp README · 2025-10 | ✅ | Demotes Tekmetric to approval-gated secondary |
+
+### D2 — System of record
+| ID | Claim (evidence) | Source · date | Conf | Decision impact |
+|---|---|---|---|---|
+| OPUS-D2-01 | CQRS: write model = SoR; read model = "durable, read-only cache", eventually consistent | learn.microsoft.com /azure/architecture/patterns/cqrs | ✅✅ | Incumbent-as-SoR + projection is a sound pattern |
+| OPUS-D2-02 | Tekmetric: narrow webhooks; else "your account data will sync once per hour" | support.shopgenie.io tekmetric webhooks | ✅✅ | "Thin cache" framing fails → needs delta-poll |
+| OPUS-D2-03 | Shopify mandates reconciliation jobs (webhook delivery not guaranteed) via updated_at | shopify.dev/docs/apps/build/webhooks | ✅✅ | Projection always needs push + delta-poll + reconcile |
+| OPUS-D2-04 | SoR is per bounded context / per domain (data sovereignty per microservice) | learn.microsoft.com /dotnet/architecture/microservices | ✅ | SoR is per-domain; Supabase = SoR for originated data |
+| OPUS-D2-05 | Treating a projection as both incumbent-cache and originated-store invites the dual-write problem | confluent.io/blog/dual-write-problem | ✅ | Write-backs need a transactional outbox |
+
+### D3 — Workflow engine + license (architecture-changer)
+| ID | Claim (evidence) | Source · date | Conf | Decision impact |
+|---|---|---|---|---|
+| OPUS-D3-01 | n8n Sustainable Use License limits use to "internal business purposes"; distribution only free-of-charge non-commercial. Fair-code, SPDX NOASSERTION | raw n8n LICENSE.md (master) · 2026 | ✅✅ | n8n not free for commercial multi-tenant resale |
+| OPUS-D3-02 | n8n help center: hosting clients' workflows = paid Enterprise; embedding/exposing to clients = paid Embed/OEM | support.n8n.io + docs.n8n.io/embed | ✅✅ | snap-forge's exact pattern requires a paid n8n license |
+| OPUS-D3-03 | n8n "back-end to power a feature" carve-out is void if using users' own credentials to access their data | n8n FAQ · 2026 | ✅✅ | Closes the free-backend loophole for snap-forge |
+| OPUS-D3-04 | Activepieces core = MIT Expat; packages/ee (multi-tenancy, RBAC, SSO, embed, white-label, audit) = Commercial | raw Activepieces LICENSE · rel 0.85.3 2026-06-14 | ✅✅ | MIT engine usable; build own tenancy, don't enable ee/ |
+| OPUS-D3-05 | Windmill = AGPLv3 + proprietary EE; network copyleft attaches when re-exposing modified Windmill | github windmill LICENSE · 2026 | ✅ | Windmill is an AGPL trap for closed-source SaaS unless isolated/licensed |
+| OPUS-D3-06 | Trigger.dev = clean Apache-2.0, self-hostable, HITL waitpoints, active | api.github.com/repos/triggerdotdev/trigger.dev | ✅ | Lowest-license-risk code-first orchestrator candidate |
+| OPUS-D3-07 | n8n engineering merit: ~192k★, rel 2.25.7 2026-06-10, 400+ integrations | api.github.com/repos/n8n-io/n8n | ✅✅ | Ranking sound on merit; only licensing demotes it |
+
+### D4 — Gateway contract
+| ID | Claim (evidence) | Source · date | Conf | Decision impact |
+|---|---|---|---|---|
+| OPUS-D4-01 | service_role has BYPASSRLS and is what Edge Functions / webhooks / orchestrator DB nodes use | supabase.com/docs/.../postgres/roles | ✅✅ | A library gateway is bypassable → pure-library invariant refuted |
+| OPUS-D4-02 | BYPASSRLS bypasses **row security only**, not GRANT/REVOKE table privileges | postgresql.org/docs/current/ddl-rowsecurity.html | ✅✅ | Table-level REVOKE can still bind service_role |
+| OPUS-D4-03 | service_role is NOT a superuser (only bypass-RLS) | github supabase discussions #36362 | ✅✅ | Confirms REVOKE binds it |
+| OPUS-D4-04 | REVOKE EXECUTE FROM PUBLIC + selective grants + SECURITY DEFINER funcs = single controlled write path | docs.postgrest.org/.../db_authz.html | ✅✅ | The enforcement layer that makes the invariant physically true |
+| OPUS-D4-05 | Real-world 42501 "permission denied" proves service_role loses table access after REVOKE | supabase troubleshooting 42501 docs | ✅ | DB-level enforcement is documented + observed |
+| OPUS-D4-06 | One-action-per-block has friction: reads (CQRS), multi-action txns, bulk ops need escape hatches | enterprisecraftsmanship.com + CQRS | ✅ | Mandates read/bulk/multi-step escape hatches |
+
+### D5 — Multi-tenancy / RLS
+| ID | Claim (evidence) | Source · date | Conf | Decision impact |
+|---|---|---|---|---|
+| OPUS-D5-01 | "Supabase provides special Service keys, which can be used to bypass RLS" (verbatim) | supabase.com/docs/.../row-level-security | ✅✅ | RLS is not the boundary for the service_role backend tier |
+| OPUS-D5-02 | CVE-2025-48757 (CVSS 9.3): missing/insufficient RLS exposed PII/API-keys/payment data across 170+ Lovable+Supabase projects | mattpalmer.io · 2025-05 | ✅✅ | "Forgot RLS = breach" is empirical on this stack |
+| OPUS-D5-03 | RLS engine CVEs: 2024-10976, 2025-8713 | postgresql.org/support/security | ✅ | Shared-schema correctness contingent on staying patched (≥17.6/16.10) |
+| OPUS-D5-04 | AWS SaaS Lens: tenant-boundary crossing "potentially unrecoverable"; compliance pushes to silo | docs.aws.amazon.com/.../saas-lens/tenant-isolation | ✅ | Pool/shared-schema often not acceptable for regulated tenants |
+| OPUS-D5-05 | Supabase HIPAA model is project-level (BAA + add-on; not self-hosted) | supabase.com/docs/guides/platform/hipaa-projects | ✅ | Compliance unit of isolation = project, not row → silo for PHI |
+| OPUS-D5-06 | RLS perf fixes: (select auth.uid()) 179→9ms; index tenant col 171→<0.1ms; TO authenticated 170→<0.1ms | supabase.com/docs/.../row-level-security | ✅ | RLS-at-scale is fine for non-regulated if discipline enforced |

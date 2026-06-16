@@ -53,3 +53,14 @@ RLS-only is not enough when runtime code can use `service_role`, direct SQL, or 
 2. [Supabase Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
 3. [Supabase: Securing your API](https://supabase.com/docs/guides/api/securing-your-api)
 4. [Supabase: Understanding API keys](https://supabase.com/docs/guides/getting-started/api-keys)
+
+## Update (2026-06-15 consolidation): empirical breach evidence + per-vertical silo escalation
+
+Salvaged from the parallel `research/opus-4-8-20260614-1049` run (closed; findings folded in). This ADR's "RLS is necessary but not sufficient" stance is correct; the parallel run supplied the *empirical* evidence and the regulated-vertical rule this memo lacked:
+
+- **The "forgot/under-scoped RLS = breach" failure mode is empirical, on this exact stack.** CVE-2025-48757 (CVSS 9.3) exposed PII, API keys, and payment data across **170+ production Lovable+Supabase projects** via missing/insufficient RLS (`OPUS-D5-02`). This is the strongest argument for the CI RLS-coverage gate already required above.
+- **The RLS engine itself has had cross-boundary leaks** — CVE-2024-10976 (wrong policy under role/plan reuse) and CVE-2025-8713 (optimizer statistics leak RLS-hidden rows). Shared-schema correctness is contingent on **staying patched** (≥17.6/16.10) (`OPUS-D5-03`).
+- **For regulated verticals the compliance unit of isolation is the project/silo, not the row.** AWS SaaS Lens treats a tenant-boundary crossing as "potentially unrecoverable," and Supabase's own HIPAA model operates at the **project** level (BAA + add-on; not self-hosted) (`OPUS-D5-04/05`). **Per-vertical escalation rule:** keep shared-schema RLS for non-regulated auto-repair; escalate PHI/HIPAA and cannabis/Metrc tenants to **project-per-tenant (silo)** or at minimum schema-per-tenant.
+- **RLS-at-scale performance is solved** by following the advisory: `(select auth.uid())` ~179→9ms, index the tenant column ~171→<0.1ms, `TO authenticated` ~170→<0.1ms (`OPUS-D5-06`). No excuse to skip RLS for perf.
+
+Cross-link: the ADR-D4 DB-level write enforcement (REVOKE direct writes + `SECURITY DEFINER` writer role) is the strongest compensating control for the `service_role` bypass — design D4 and D5 together.
