@@ -87,6 +87,8 @@ Principle: **deterministic skeleton, AI-authored muscles, human-in-the-loop nerv
 - **[docs/STATUS.md](docs/STATUS.md)** — current status and the proposed next step.
 - **[docs/foundation-review-2026-06-15.md](docs/foundation-review-2026-06-15.md)** — the consolidation review: branch dispositions, what was salvaged/dropped, live-source verification of the load-bearing claims, and the required follow-up fixes.
 - **[docs/uncertainty-register.md](docs/uncertainty-register.md)** — the honest record of what we don't know, from thesis-level "are we even on the right path" risks down to settle-by-building unknowns.
+- **[ORIGINAL_REQUEST.md](ORIGINAL_REQUEST.md)** — the original brief that kicked this off (research the open questions; build a concrete blueprint + implementation plan for the first build spike). Kept so we remember *why* we started.
+- **[docs/research/archive/opus-4-8-20260614/](docs/research/archive/opus-4-8-20260614/)** — verbatim archive of the parallel `opus-4-8` research run (PR #1, closed). Historical record, not canonical — its load-bearing findings were salvaged into the ADRs above.
 
 ## How this was researched
 
